@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=t2-strong
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=32
+#SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
 #SBATCH --time=06:00:00
 #SBATCH --output=results/strong_%j.out

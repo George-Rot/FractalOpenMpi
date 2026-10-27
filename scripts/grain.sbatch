@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=t2-grain
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=32
+#SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
 #SBATCH --time=04:00:00
 #SBATCH --output=results/grain_%j.out

@@ -6,11 +6,13 @@ HEIGHT=${HEIGHT:-2000}       # = numero de tarefas (linhas) da entrada de refere
 MAX_ITER=${MAX_ITER:-20000}
 GRAIN=${GRAIN:-4}            # linhas por mensagem (justificar com pingpong/grain)
 REPS=${REPS:-10}
-PROCS=${PROCS:-"2 4 8 16 32 64"}
+# Nos do Atlantica: 8 nucleos fisicos + HT = 16 threads (lscpu). Com 2 nos:
+# P<=16 -> 1 processo por nucleo fisico; P=32 -> usa HT (2 por nucleo).
+PROCS=${PROCS:-"2 4 8 16 32"}
 GRAINS=${GRAINS:-"1 4 16 64 256"}
 
 # Distribuicao: --map-by node espalha os ranks em round-robin entre os 2 nos
-# (rank 0 = mestre no no 1, rank 1 no no 2, ...). Com P=64 cada no recebe 32
+# (rank 0 = mestre no no 1, rank 1 no no 2, ...). Com P=32 cada no recebe 16
 # ranks -> usa as threads de HT. Troque se o cluster exigir srun.
 MPIRUN=${MPIRUN:-"mpirun --map-by node --bind-to core:overload-allowed"}
 
