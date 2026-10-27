@@ -12,11 +12,11 @@
 cd "$SLURM_SUBMIT_DIR"; source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for G in $GRAINS; do
-  echo "# intra-no"; mpirun -np 2 --map-by core ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
-  echo "# inter-no"; mpirun -np 2 --map-by node ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
+  echo "# intra-no"; srun -n 2 -N 1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
+  echo "# inter-no"; srun -n 2 -N 2 --ntasks-per-node=1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
 done
 for G in $GRAINS; do
   for r in $(seq "$REPS"); do
-    $MPIRUN -np 32 ./bin/mandel_mpi "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
+    $MPIRUN -n 32 ./bin/mandel_mpi "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
   done
 done

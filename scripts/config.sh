@@ -11,9 +11,10 @@ REPS=${REPS:-10}
 PROCS=${PROCS:-"2 4 8 16 32"}
 GRAINS=${GRAINS:-"1 4 16 64 256"}
 
-# Distribuicao: --map-by node espalha os ranks em round-robin entre os 2 nos
+# Distribuicao: no LAD os programas MPI sao lancados com srun (manual do LAD).
+# --distribution=cyclic espalha os ranks em round-robin entre os 2 nos
 # (rank 0 = mestre no no 1, rank 1 no no 2, ...). Com P=32 cada no recebe 16
-# ranks -> usa as threads de HT. Troque se o cluster exigir srun.
-MPIRUN=${MPIRUN:-"mpirun --map-by node --bind-to core:overload-allowed"}
+# ranks -> usa as threads de HT.
+MPIRUN=${MPIRUN:-"srun --distribution=cyclic"}
 
 mkdir -p results

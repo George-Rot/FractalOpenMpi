@@ -31,13 +31,14 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 ```bash
 make                                  # bin/mandel_seq, bin/mandel_mpi, bin/pingpong
 ./bin/mandel_seq 2000 2000 20000      # teste local
-mpirun -np 4 ./bin/mandel_mpi 2000 2000 20000 4
+srun -n 4 ./bin/mandel_mpi 2000 2000 20000 4
 
 # no Atlântica (sempre os mesmos 2 nós: acrescente -w no1,no2)
 sbatch scripts/seq.sbatch             # T1 (ajuste MAX_ITER p/ 30–60 s)
 sbatch scripts/strong.sbatch
 sbatch scripts/weak.sbatch
 sbatch scripts/grain.sbatch
+sbatch scripts/mpi_all.sbatch         # forte+fraca+grain+analise num job so (limite LAD: 2 jobs na fila)
 python3 scripts/analyze.py            # results/tables.md, speedup.png, efficiency.png
 ```
 Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=30000 sbatch scripts/strong.sbatch`.
@@ -46,4 +47,4 @@ Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=30000 sbatch scr
 - Região medida: `MPI_Wtime()` no mestre, após `MPI_Barrier`, do início da distribuição até o último resultado; alocação/estatísticas fora. No sequencial, só o laço de linhas.
 - Equivalência: toda execução imprime `checksum` e `total_iters`; o checksum pondera a posição da linha, então detecta linhas fora de ordem.
 - Fraca: `height = HEIGHT × P` com largura e região fixas → custo médio por tarefa constante; `total_iters` comprova o crescimento ~P.
-- Distribuição: `mpirun --map-by node` (round-robin entre os 2 nós).
+- Distribuição: `srun --distribution=cyclic` (round-robin entre os 2 nós).

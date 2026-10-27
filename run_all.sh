@@ -15,15 +15,11 @@ mkdir -p results
 NODES=${1:+-w $1}
 SEQ_NODES=${1:+-w ${1%%,*}}   # sequencial roda no primeiro no
 
+# LAD: no maximo 2 jobs enfileirados por usuario -> 2 jobs:
+#   1) sequencial (1 no)   2) forte+fraca+grain+analise numa alocacao de 2 nos
 J0=$(sbatch --parsable $SEQ_NODES scripts/seq.sbatch)
-J1=$(sbatch --parsable $NODES --dependency=afterany:$J0 scripts/strong.sbatch)
-J2=$(sbatch --parsable $NODES --dependency=afterany:$J1 scripts/weak.sbatch)
-J3=$(sbatch --parsable $NODES --dependency=afterany:$J2 scripts/grain.sbatch)
-# Analise final roda sozinha ao fim (job leve, 1 no, nao exclusivo).
-J4=$(sbatch --parsable --dependency=afterany:$J3 --nodes=1 --ntasks=1 --time=00:10:00 \
-     --job-name=t2-analyze --output=results/analyze_%j.out \
-     --wrap="python3 scripts/analyze.py results")
+J1=$(sbatch --parsable $NODES --dependency=afterany:$J0 scripts/mpi_all.sbatch)
 
-echo "Jobs: seq=$J0 strong=$J1 weak=$J2 grain=$J3 analyze=$J4"
+echo "Jobs: seq=$J0 mpi_all=$J1"
 echo "Acompanhe com: squeue -u \$USER"
 echo "Ao final: results/tables.md, results/speedup.png, results/efficiency.png"

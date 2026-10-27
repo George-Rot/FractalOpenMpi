@@ -10,6 +10,6 @@ cd "$SLURM_SUBMIT_DIR"; source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for P in $PROCS; do
   for r in $(seq "$REPS"); do
-    $MPIRUN -np "$P" ./bin/mandel_mpi "$WIDTH" "$HEIGHT" "$MAX_ITER" "$GRAIN" | grep '^MPI'
+    $MPIRUN -n "$P" ./bin/mandel_mpi "$WIDTH" "$HEIGHT" "$MAX_ITER" "$GRAIN" | grep '^MPI'
   done
 done
