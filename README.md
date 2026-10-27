@@ -22,6 +22,11 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 5. Último bloco é `min(grain, restante)`; P ≥ 2 qualquer.
 6. `grain` é o 4º argumento.
 
+## Rodar tudo
+```bash
+./run_all.sh no1,no2      # compila e submete seq, forte, fraca, grain e analise em cadeia
+```
+
 ## Comandos
 ```bash
 make                                  # bin/mandel_seq, bin/mandel_mpi, bin/pingpong
