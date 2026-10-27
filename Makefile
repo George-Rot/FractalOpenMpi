@@ -1,7 +1,9 @@
 # Mesmas flags de otimizacao para sequencial e paralela (regra 4.2).
 CC      ?= gcc
 MPICC   ?= mpicc
-CFLAGS  = -O3 -march=native -std=c11 -Wall -Wextra
+# Sem -march=native: o no de login tem CPU mais nova que os nos de computo
+# (Xeon E5520, Nehalem) e gerava "Illegal instruction".
+CFLAGS  = -O3 -std=c11 -Wall -Wextra
 LDLIBS  = -lm
 
 BIN = bin
