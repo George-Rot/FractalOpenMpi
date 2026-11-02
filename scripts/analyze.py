@@ -31,8 +31,8 @@ def stats(v): return median(v), min(v), max(v)
 out = []
 seq = parse("seq", "SEQ")
 ref_w = int(os.environ.get("WIDTH", 2000))
-ref_h = int(os.environ.get("HEIGHT", 2000))
-ref_iter = int(os.environ.get("MAX_ITER", 20000))
+ref_h = int(os.environ.get("HEIGHT", 4000))
+ref_iter = int(os.environ.get("MAX_ITER", 2000))
 seq_ref = [r for r in seq if (int(r["width"]), int(r["height"]), int(r["max_iter"]))
            == (ref_w, ref_h, ref_iter)]
 if not seq_ref:

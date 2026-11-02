@@ -30,8 +30,8 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 ## Comandos
 ```bash
 make                                  # bin/mandel_seq, bin/mandel_mpi, bin/pingpong
-./bin/mandel_seq 2000 2000 20000      # teste local
-srun -n 4 ./bin/mandel_mpi 2000 2000 20000 4
+./bin/mandel_seq 2000 4000 2000       # entrada de referencia
+srun -n 4 ./bin/mandel_mpi 2000 4000 2000 4
 
 # no Atlântica (sempre os mesmos 2 nós)
 mkdir -p results                      # necessário antes de sbatch abrir results/*.out
@@ -42,7 +42,7 @@ sbatch -w no1,no2 scripts/grain.sbatch
 sbatch -w no1,no2 scripts/mpi_all.sbatch  # forte+fraca+grain+analise num job so
 python3 scripts/analyze.py            # results/tables.md, speedup.png, efficiency.png
 ```
-Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=30000 sbatch scripts/strong.sbatch`.
+Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=4000 sbatch -w no1,no2 scripts/strong.sbatch`.
 
 ## Metodologia
 - Região medida: `MPI_Wtime()` no mestre, após `MPI_Barrier`, do início da distribuição até o último resultado; alocação/estatísticas fora. No sequencial, só o laço de linhas.
