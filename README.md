@@ -8,7 +8,7 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 |---|---|
 | `src/mandel.h` | cálculo de uma linha + checksum (compartilhado) |
 | `src/mandel_seq.c` | versão sequencial (T1) |
-| `src/mandel_mpi.c` | mestre/escravo: tags `REQUEST/RESULT/WORK/STOP/STATS` |
+| `src/mandel_mpi.c` | mestre/escravo: tags `REQUEST/RESULT/WORK/STOP`; estatísticas via `MPI_Gather` |
 | `src/pingpong.c` | tempo de tarefa × ida‑e‑volta de mensagem do mesmo tamanho |
 | `scripts/*.sbatch` | jobs Slurm (seq, forte, fraca, granularidade) |
 | `scripts/config.sh` | parâmetros únicos (entrada, P, grains, reps, mpirun) |
@@ -33,12 +33,13 @@ make                                  # bin/mandel_seq, bin/mandel_mpi, bin/ping
 ./bin/mandel_seq 2000 2000 20000      # teste local
 srun -n 4 ./bin/mandel_mpi 2000 2000 20000 4
 
-# no Atlântica (sempre os mesmos 2 nós: acrescente -w no1,no2)
-sbatch scripts/seq.sbatch             # T1 (ajuste MAX_ITER p/ 30–60 s)
-sbatch scripts/strong.sbatch
-sbatch scripts/weak.sbatch
-sbatch scripts/grain.sbatch
-sbatch scripts/mpi_all.sbatch         # forte+fraca+grain+analise num job so (limite LAD: 2 jobs na fila)
+# no Atlântica (sempre os mesmos 2 nós)
+mkdir -p results                      # necessário antes de sbatch abrir results/*.out
+sbatch -w no1 scripts/seq.sbatch      # T1 (ajuste MAX_ITER p/ 30–60 s)
+sbatch -w no1,no2 scripts/strong.sbatch
+sbatch -w no1,no2 scripts/weak.sbatch
+sbatch -w no1,no2 scripts/grain.sbatch
+sbatch -w no1,no2 scripts/mpi_all.sbatch  # forte+fraca+grain+analise num job so
 python3 scripts/analyze.py            # results/tables.md, speedup.png, efficiency.png
 ```
 Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=30000 sbatch scripts/strong.sbatch`.
@@ -47,4 +48,5 @@ Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=30000 sbatch scr
 - Região medida: `MPI_Wtime()` no mestre, após `MPI_Barrier`, do início da distribuição até o último resultado; alocação/estatísticas fora. No sequencial, só o laço de linhas.
 - Equivalência: toda execução imprime `checksum` e `total_iters`; o checksum pondera a posição da linha, então detecta linhas fora de ordem.
 - Fraca: `height = HEIGHT × P` com largura e região fixas → custo médio por tarefa constante; `total_iters` comprova o crescimento ~P.
-- Distribuição: `srun --distribution=cyclic` (round-robin entre os 2 nós).
+- Distribuição: `srun --distribution=cyclic` (round-robin entre os 2 nós); o limite de 16 tarefas por nó permite até P=32 em dois nós.
+- O enunciado menciona P=64 para HT, mas o limite operacional de 16 tarefas por nó impede esse ponto nos dois nós disponíveis; registre essa restrição no relatório.

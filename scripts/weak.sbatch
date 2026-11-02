@@ -8,7 +8,9 @@
 # Escalabilidade fraca: tarefas = HEIGHT * P. A largura (custo de cada linha)
 # e a regiao do plano sao fixas, entao o custo medio por tarefa se mantem e o
 # trabalho total (total_iters impresso) cresce ~P vezes.
-cd "$SLURM_SUBMIT_DIR"; source scripts/config.sh
+set -euo pipefail
+cd "$SLURM_SUBMIT_DIR"
+source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for P in $PROCS; do
   H=$((HEIGHT * P))

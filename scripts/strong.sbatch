@@ -5,8 +5,10 @@
 #SBATCH --exclusive
 #SBATCH --time=06:00:00
 #SBATCH --output=results/strong_%j.out
-# Escalabilidade forte: entrada fixa, P = 2..64, REPS repeticoes cada.
-cd "$SLURM_SUBMIT_DIR"; source scripts/config.sh
+# Escalabilidade forte: entrada fixa, P = 2..32, REPS repeticoes cada.
+set -euo pipefail
+cd "$SLURM_SUBMIT_DIR"
+source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for P in $PROCS; do
   for r in $(seq "$REPS"); do

@@ -9,7 +9,9 @@
 #  (a) tempo de tarefa vs ida e volta (intra-no e inter-no)
 #  (b) varias granularidades
 #  (c) linhas SLAVE: blocos, linhas e tempo ocupado por escravo
-cd "$SLURM_SUBMIT_DIR"; source scripts/config.sh
+set -euo pipefail
+cd "$SLURM_SUBMIT_DIR"
+source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for G in $GRAINS; do
   echo "# intra-no"; srun -n 2 -N 1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"

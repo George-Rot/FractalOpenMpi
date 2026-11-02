@@ -14,8 +14,8 @@
  *                                   tambem vale como pedido do proximo (req. 1)
  *   TAG_WORK     mestre  -> escravo [start, count]: bloco a processar
  *   TAG_STOP     mestre  -> escravo saco vazio, escravo deve terminar (req. 4)
- *   TAG_STATS    escravo -> mestre  [tarefas, linhas, tempo ocupado] apos STOP
- *                                   (fora da regiao medida; usado no balanceamento)
+ * Estatisticas sao reunidas com MPI_Gather apos todos os escravos receberem
+ * TAG_STOP, fora da regiao medida; assim nao entram no MPI_ANY_TAG do mestre.
  */
 #include <mpi.h>
 #include <stdio.h>
@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include "mandel.h"
 
-enum { TAG_REQUEST = 1, TAG_RESULT = 2, TAG_WORK = 3, TAG_STOP = 4, TAG_STATS = 5 };
+enum { TAG_REQUEST = 1, TAG_RESULT = 2, TAG_WORK = 3, TAG_STOP = 4 };
 
 #define HDR 2 /* cabecalho das mensagens de resultado: start, count */
 
@@ -33,7 +33,8 @@ static void master(int nprocs, int width, int height, int max_iter, int grain)
     int *img = malloc((size_t)width * height * sizeof(int));
     /* buffer que cabe o maior resultado possivel: cabecalho + grain linhas */
     int *buf = malloc(((size_t)HDR + (size_t)grain * width) * sizeof(int));
-    if (!img || !buf) { perror("malloc"); MPI_Abort(MPI_COMM_WORLD, 1); }
+    double *all_stats = malloc((size_t)nprocs * 3 * sizeof(double));
+    if (!img || !buf || !all_stats) { perror("malloc"); MPI_Abort(MPI_COMM_WORLD, 1); }
 
     const int nslaves = nprocs - 1;
     int next_row = 0;   /* topo do saco */
@@ -76,13 +77,17 @@ static void master(int nprocs, int width, int height, int max_iter, int grain)
            mandel_total_iters(img, (long)width * height),
            mandel_checksum(img, width, height), t1 - t0);
 
+    /* Todos os escravos ja receberam STOP antes de o mestre chegar aqui. */
+    double master_stats[3] = {0.0, 0.0, 0.0};
+    MPI_Gather(master_stats, 3, MPI_DOUBLE, all_stats, 3, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
     /* Estatisticas por escravo (balanceamento), coletadas fora da regiao medida. */
     for (int s = 1; s <= nslaves; s++) {
-        double stats[3];
-        MPI_Recv(stats, 3, MPI_DOUBLE, s, TAG_STATS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        const double *stats = all_stats + 3 * s;
         printf("SLAVE rank=%d blocks=%.0f rows=%.0f busy=%.6f idle=%.6f\n",
                s, stats[0], stats[1], stats[2], (t1 - t0) - stats[2]);
     }
+    free(all_stats);
     free(buf);
     free(img);
 }
@@ -119,7 +124,7 @@ static void slave(int width, int height, int max_iter, int grain)
     }
 
     double stats[3] = { (double)blocks, (double)rows, busy };
-    MPI_Send(stats, 3, MPI_DOUBLE, 0, TAG_STATS, MPI_COMM_WORLD);
+    MPI_Gather(stats, 3, MPI_DOUBLE, NULL, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     free(buf);
 }
 

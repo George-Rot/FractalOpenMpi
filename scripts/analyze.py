@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """analyze.py - le results/*.out, gera tabelas (mediana/min/max) e graficos.
 
-Uso: python3 scripts/analyze.py [results]
+Uso: python3 scripts/analyze.py [results [seq_job_id mpi_job_id]]
 Saidas: results/tables.md, results/speedup.png, results/efficiency.png
 """
 import glob, os, re, sys
@@ -9,11 +9,18 @@ from collections import defaultdict
 from statistics import median
 
 d = sys.argv[1] if len(sys.argv) > 1 else "results"
+seq_job_id = sys.argv[2] if len(sys.argv) > 2 else ""
+mpi_job_id = sys.argv[3] if len(sys.argv) > 3 else ""
 KV = re.compile(r"(\w+)=([\w.\-]+)")
+
+def result_files(prefix):
+    job_id = seq_job_id if prefix == "seq" else mpi_job_id
+    pattern = f"{prefix}_{job_id}.out" if job_id else f"{prefix}_*.out"
+    return sorted(glob.glob(os.path.join(d, pattern)))
 
 def parse(prefix, tag):
     rows = []
-    for f in sorted(glob.glob(os.path.join(d, f"{prefix}_*.out"))):
+    for f in result_files(prefix):
         for line in open(f):
             if line.startswith(tag):
                 rows.append(dict(KV.findall(line)))
@@ -23,12 +30,16 @@ def stats(v): return median(v), min(v), max(v)
 
 out = []
 seq = parse("seq", "SEQ")
+ref_w = int(os.environ.get("WIDTH", 2000))
 ref_h = int(os.environ.get("HEIGHT", 2000))
-seq_ref = [r for r in seq if int(r["height"]) == ref_h] or seq
+ref_iter = int(os.environ.get("MAX_ITER", 20000))
+seq_ref = [r for r in seq if (int(r["width"]), int(r["height"]), int(r["max_iter"]))
+           == (ref_w, ref_h, ref_iter)]
 if not seq_ref:
-    sys.exit("sem resultados sequenciais em %s" % d)
+    sys.exit("sem resultado sequencial da entrada de referencia em %s" % d)
 T1, T1min, T1max = stats([float(r["time"]) for r in seq_ref])
-seq_ck = {int(r["height"]): r["checksum"] for r in seq}
+seq_ck = {(int(r["width"]), int(r["height"]), int(r["max_iter"])): r["checksum"]
+          for r in seq}
 out += ["## Sequencial", f"T1 mediana={T1:.3f}s min={T1min:.3f} max={T1max:.3f} "
         f"checksum={seq_ref[0]['checksum']} total_iters={seq_ref[0]['total_iters']}", ""]
 
@@ -44,8 +55,9 @@ def scaling(prefix, title, weak):
         med, mn, mx = stats(t)
         h = int(by[P][0]["height"])
         ck = {r["checksum"] for r in by[P]}
-        ok = ("sim" if seq_ck.get(h) in ck and len(ck) == 1 else
-              ("consistente" if len(ck) == 1 else "NAO"))
+        key = (int(by[P][0]["width"]), h, int(by[P][0]["max_iter"]))
+        ok = ("sem referencia" if key not in seq_ck else
+              ("sim" if ck == {seq_ck[key]} else "NAO"))
         S = T1 / med
         E = S if weak else S / P  # fraca: E = T1/Tp
         res[P] = (S, E)
@@ -67,7 +79,7 @@ if pp:
                    f"{float(r['task_avg'])*1e6:.1f} | {r['ratio']} |")
     out.append("")
 g = defaultdict(list); slaves = defaultdict(lambda: defaultdict(list))
-for f in sorted(glob.glob(os.path.join(d, "grain_*.out"))):
+for f in result_files("grain"):
     cur = None
     for line in open(f):
         kv = dict(KV.findall(line))
