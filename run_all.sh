@@ -1,26 +1,39 @@
 #!/bin/bash
 # run_all.sh - compila e submete todos os experimentos em cadeia no Slurm.
 #
-# Uso: ./run_all.sh no1,no2
-#   no1,no2 fixa sempre os mesmos 2 nos (regra 4.1)
-# Variaveis de config.sh podem ser sobrescritas, ex.: MAX_ITER=3000 ./run_all.sh no1,no2
+# Uso: ./run_all.sh no1,no2,no3,no4
+#   fixa os mesmos 4 nos para os experimentos MPI (P=64 usa HT).
+# Variaveis de config.sh podem ser sobrescritas, ex.: MAX_ITER=3000 ./run_all.sh no1,no2,no3,no4
 # Modulo MPI: defina MPI_MODULE (ex.: MPI_MODULE=openmpi ./run_all.sh).
 set -euo pipefail
 cd "$(dirname "$0")"
-if [[ $# -ne 1 || "$1" != *,* || "$1" == ,* || "$1" == *, ]]; then
-  echo "uso: $0 no1,no2" >&2
+if [[ $# -ne 1 ]]; then
+  echo "uso: $0 no1,no2,no3,no4" >&2
   exit 2
 fi
+IFS=, read -r -a NODE_NAMES <<< "$1"
+if (( ${#NODE_NAMES[@]} != 4 )); then
+  echo "uso: $0 no1,no2,no3,no4 (quatro nos distintos)" >&2
+  exit 2
+fi
+declare -A SEEN_NODES=()
+for NODE_NAME in "${NODE_NAMES[@]}"; do
+  if [[ ! "$NODE_NAME" =~ ^[a-zA-Z0-9._-]+$ || -n "${SEEN_NODES[$NODE_NAME]+x}" ]]; then
+    echo "informe quatro nomes de nos distintos" >&2
+    exit 2
+  fi
+  SEEN_NODES[$NODE_NAME]=1
+done
 
 if [ -n "${MPI_MODULE:-}" ]; then module load "$MPI_MODULE"; fi
 make
 mkdir -p results
 
 NODES=$1
-SEQ_NODE=${1%%,*}   # sequencial roda no primeiro no
+SEQ_NODE=${NODE_NAMES[0]}   # sequencial roda no primeiro no
 
 # LAD: no maximo 2 jobs enfileirados por usuario -> 2 jobs:
-#   1) sequencial (1 no)   2) forte+fraca+grain+analise numa alocacao de 2 nos
+#   1) sequencial (1 no)   2) forte+fraca+grain+analise numa alocacao de 4 nos
 J0=$(sbatch --parsable -w "$SEQ_NODE" scripts/seq.sbatch)
 J1=$(sbatch --parsable -w "$NODES" --dependency="afterok:$J0" \
      --export="ALL,T2_SEQ_JOB_ID=$J0" scripts/mpi_all.sbatch)

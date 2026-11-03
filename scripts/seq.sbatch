@@ -6,7 +6,7 @@
 #SBATCH --output=results/seq_%j.out
 # Versao sequencial (T1): 10 repeticoes da entrada de referencia em 1 no.
 # Tambem roda cada entrada da escalabilidade fraca (height*P) uma vez para
-# conferir os checksums; pode demorar ate ~62*T1 para P=2..32.
+# conferir os checksums; pode demorar ate ~126*T1 para P=2..64.
 set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
 source scripts/config.sh

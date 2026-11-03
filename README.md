@@ -24,7 +24,7 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 
 ## Rodar tudo
 ```bash
-./run_all.sh no1,no2      # compila e submete seq, forte, fraca, grain e analise em cadeia
+./run_all.sh no1,no2,no3,no4  # compila e submete seq, forte, fraca, grain e analise
 ```
 
 ## Comandos
@@ -33,20 +33,20 @@ make                                  # bin/mandel_seq, bin/mandel_mpi, bin/ping
 ./bin/mandel_seq 2500 6000 2000       # entrada de referencia
 srun -n 4 ./bin/mandel_mpi 2500 6000 2000 4
 
-# no Atlântica (sempre os mesmos 2 nós)
+# no Atlântica (alocacao de 4 nós para P=64)
 mkdir -p results                      # necessário antes de sbatch abrir results/*.out
 sbatch -w no1 scripts/seq.sbatch      # T1 (ajuste MAX_ITER p/ 30–60 s)
-sbatch -w no1,no2 scripts/strong.sbatch
-sbatch -w no1,no2 scripts/weak.sbatch
-sbatch -w no1,no2 scripts/grain.sbatch
-sbatch -w no1,no2 scripts/mpi_all.sbatch  # forte+fraca+grain+analise num job so
+sbatch -w no1,no2,no3,no4 scripts/strong.sbatch
+sbatch -w no1,no2,no3,no4 scripts/weak.sbatch
+sbatch -w no1,no2,no3,no4 scripts/grain.sbatch
+sbatch -w no1,no2,no3,no4 scripts/mpi_all.sbatch  # forte+fraca+grain+analise num job so
 python3 scripts/analyze.py            # results/tables.md, speedup.png, efficiency.png
 ```
-Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=4000 sbatch -w no1,no2 scripts/strong.sbatch`.
+Parâmetros podem ser sobrescritos por ambiente, ex.: `MAX_ITER=4000 sbatch -w no1,no2,no3,no4 scripts/strong.sbatch`.
 
 ## Metodologia
 - Região medida: `MPI_Wtime()` no mestre, após `MPI_Barrier`, do início da distribuição até o último resultado; alocação/estatísticas fora. No sequencial, só o laço de linhas.
 - Equivalência: toda execução imprime `checksum` e `total_iters`; o checksum pondera a posição da linha, então detecta linhas fora de ordem.
 - Fraca: `height = HEIGHT × P` com largura e região fixas → custo médio por tarefa constante; `total_iters` comprova o crescimento ~P.
-- Distribuição: `srun --distribution=cyclic` (round-robin entre os 2 nós); o limite de 16 tarefas por nó permite até P=32 em dois nós.
-- O enunciado menciona P=64 para HT, mas o limite operacional de 16 tarefas por nó impede esse ponto nos dois nós disponíveis; registre essa restrição no relatório.
+- Distribuição: `srun --distribution=cyclic`; P=2 usa dois nós, P>=4 usa quatro nós. Até P=32 há no máximo um rank por núcleo físico (`--ntasks-per-core=1`); P=64 usa os dois threads por núcleo (`--ntasks-per-core=2`).
+- Os nós medidos têm 8 núcleos físicos e 16 threads cada. Usar quatro nós para chegar a P=64 é uma adaptação à topologia observada e diverge da regra de dois nós do enunciado. Os logs e o PDF existentes descrevem a execução anterior, em dois nós.
