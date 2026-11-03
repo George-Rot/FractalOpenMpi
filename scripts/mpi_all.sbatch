@@ -3,11 +3,11 @@
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
-#SBATCH --time=08:00:00
+#SBATCH --time=04:00:00
 #SBATCH --output=results/mpi_all_%j.out
 # Roda forte, fraca e granularidade numa unica alocacao (mesmos 4 nos) e no fim
 # a analise. Existe porque o LAD limita a 2 jobs enfileirados por usuario e a
-# o tempo total do job precisa caber no limite de 8 h solicitado abaixo.
+# o tempo total do job precisa caber nas 4 h solicitadas abaixo.
 # Os .sbatch sao executados como scripts bash (as linhas #SBATCH viram comentario).
 set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
