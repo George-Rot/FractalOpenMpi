@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=t2-strong
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
 #SBATCH --time=06:00:00
@@ -11,10 +11,16 @@ cd "$SLURM_SUBMIT_DIR"
 source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for P in $PROCS; do
-  if (( P == 2 )); then STEP_NODES=2; else STEP_NODES=4; fi
-  if (( P <= 32 )); then TASKS_PER_CORE=1; else TASKS_PER_CORE=2; fi
+  TASKS_PER_NODE=$((P / 2))
+  if (( P <= 16 )); then
+    STEP_OPTS=(--ntasks-per-core=1)
+  elif (( P <= 32 )); then
+    STEP_OPTS=(--ntasks-per-core=2)
+  else
+    STEP_OPTS=(--overcommit --cpu-bind=none)
+  fi
   for r in $(seq "$REPS"); do
-    $MPIRUN -N "$STEP_NODES" -n "$P" --ntasks-per-core="$TASKS_PER_CORE" \
+    $MPIRUN -N 2 -n "$P" --ntasks-per-node="$TASKS_PER_NODE" "${STEP_OPTS[@]}" \
       ./bin/mandel_mpi "$WIDTH" "$HEIGHT" "$MAX_ITER" "$GRAIN" | grep '^MPI'
   done
 done

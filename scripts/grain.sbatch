@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=t2-grain
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
 #SBATCH --time=04:00:00
@@ -14,12 +14,12 @@ cd "$SLURM_SUBMIT_DIR"
 source scripts/config.sh
 echo "NODES $SLURM_JOB_NODELIST"
 for G in $GRAINS; do
-  echo "# intra-no"; srun -n 2 -N 1 --ntasks-per-core=1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
-  echo "# inter-no"; srun -n 2 -N 2 --ntasks-per-core=1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
+  echo "# intra-no"; srun -n 2 -N 1 --ntasks-per-node=2 --ntasks-per-core=1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
+  echo "# inter-no"; srun -n 2 -N 2 --ntasks-per-node=1 --ntasks-per-core=1 ./bin/pingpong "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
 done
 for G in $GRAINS; do
   for r in $(seq "$REPS"); do
-    $MPIRUN -N 4 -n 32 --ntasks-per-core=1 ./bin/mandel_mpi \
+    $MPIRUN -N 2 -n 32 --ntasks-per-node=16 --ntasks-per-core=2 ./bin/mandel_mpi \
       "$WIDTH" "$HEIGHT" "$MAX_ITER" "$G"
   done
 done
