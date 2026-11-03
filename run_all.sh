@@ -3,7 +3,7 @@
 #
 # Uso: ./run_all.sh no1,no2
 #   no1,no2 fixa sempre os mesmos 2 nos (regra 4.1)
-# Variaveis de config.sh podem ser sobrescritas, ex.: MAX_ITER=30000 ./run_all.sh
+# Variaveis de config.sh podem ser sobrescritas, ex.: MAX_ITER=3000 ./run_all.sh no1,no2
 # Modulo MPI: defina MPI_MODULE (ex.: MPI_MODULE=openmpi ./run_all.sh).
 set -euo pipefail
 cd "$(dirname "$0")"

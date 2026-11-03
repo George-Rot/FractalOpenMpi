@@ -30,8 +30,8 @@ a granularidade (`grain`) define quantas linhas vão por mensagem.
 ## Comandos
 ```bash
 make                                  # bin/mandel_seq, bin/mandel_mpi, bin/pingpong
-./bin/mandel_seq 2000 4000 2000       # entrada de referencia
-srun -n 4 ./bin/mandel_mpi 2000 4000 2000 4
+./bin/mandel_seq 2500 6000 2000       # entrada de referencia
+srun -n 4 ./bin/mandel_mpi 2500 6000 2000 4
 
 # no Atlântica (sempre os mesmos 2 nós)
 mkdir -p results                      # necessário antes de sbatch abrir results/*.out
